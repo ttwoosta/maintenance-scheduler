@@ -1,0 +1,210 @@
+/* The dialog is positioned inside the app shell (which is position: relative). */
+.dialog-root {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.sheet {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: 92%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.28);
+  padding: 18px 20px calc(var(--safe-bottom, 16px) + 16px);
+  scrollbar-width: none;
+}
+
+.sheet::-webkit-scrollbar {
+  display: none;
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.sheet-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.field-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.text-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--radius-control);
+  padding: 12px 13px;
+  font: inherit;
+  font-size: 15px;
+  margin-bottom: 18px;
+}
+
+/* ---- Type picker (single-select Listbox) ---- */
+.type-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+}
+
+.type-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border-radius: 13px;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.type-option[aria-selected='true'] {
+  border-color: var(--primary);
+}
+
+.number-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.number-field {
+  flex: 1;
+}
+
+.number-field .text-input {
+  margin-bottom: 0;
+}
+
+/* ---- Recurrence segmented control (single-select Listbox) ---- */
+.recur-segment {
+  display: flex;
+  gap: 3px;
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 3px;
+  background: var(--surface-2);
+  border-radius: var(--radius-control);
+}
+
+.recur-option {
+  flex: 1;
+  text-align: center;
+  padding: 9px 4px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.recur-option[aria-selected='true'] {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* ---- Footer ---- */
+.sheet-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.delete-btn {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+  border: none;
+  cursor: pointer;
+  background: var(--danger-soft);
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cancel-btn,
+.save-btn {
+  padding: 13px;
+  border-radius: 13px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.cancel-btn {
+  flex: 1;
+  border: 0.5px solid var(--separator);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.save-btn {
+  flex: 1.4;
+  border: none;
+  background: var(--primary);
+  color: var(--primary-contrast);
+}

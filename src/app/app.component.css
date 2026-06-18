@@ -5,27 +5,220 @@
   color: var(--text);
 }
 
+/* Container query drives the responsive shell, just like the prototype. */
+.viewport {
+  container-type: inline-size;
+  container-name: ms;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .shell {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
-  max-width: 480px;
-  margin: 0 auto;
 }
 
-/* ---- Header ---- */
-.app-header {
+/* ===== Side menu (hidden until wide) ===== */
+.sidebar {
+  display: none;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 250px;
   flex: none;
+  gap: 5px;
+  padding: 24px 14px 16px;
+  background: var(--surface);
+  border-right: 0.5px solid var(--separator);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 8px 16px;
+}
+
+.brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.brand-mark svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: var(--primary-contrast);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.brand-text {
+  min-width: 0;
+}
+
+.brand-name {
+  display: block;
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.brand-sub {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+
+.side-heading {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 16px 11px 5px;
+}
+
+.side-heading:first-of-type {
+  padding-top: 6px;
+}
+
+.side-props,
+.side-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.side-prop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 11px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.side-prop[aria-selected='true'] {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.side-nav-li {
+  list-style: none;
+}
+
+.side-nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.side-nav-item svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+
+.side-nav-item[aria-selected='true'] {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.side-spacer {
+  flex: 1;
+  min-height: 14px;
+}
+
+.side-theme {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  border: none;
+  cursor: pointer;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.side-theme svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+
+/* ===== Main column ===== */
+.maincol {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.topbar {
+  flex: none;
+  box-sizing: border-box;
   padding: 16px 18px 12px;
   background: var(--page-background);
   border-bottom: 0.5px solid var(--separator);
 }
 
-.header-top {
+.topbar-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+}
+
+.topbar-titles {
+  min-width: 0;
 }
 
 .eyebrow {
@@ -50,7 +243,7 @@
   color: var(--text-secondary);
 }
 
-.theme-toggle {
+.top-theme {
   flex: none;
   width: 38px;
   height: 38px;
@@ -64,7 +257,7 @@
   justify-content: center;
 }
 
-.theme-toggle svg {
+.top-theme svg {
   width: 19px;
   height: 19px;
   fill: none;
@@ -74,9 +267,10 @@
   stroke-linejoin: round;
 }
 
-/* ---- Property switcher ---- */
-.properties {
+/* Property chips (phone) */
+.chips {
   display: flex;
+  align-items: center;
   gap: 8px;
   list-style: none;
   margin: 13px 0 0;
@@ -85,16 +279,16 @@
   scrollbar-width: none;
 }
 
-.properties::-webkit-scrollbar {
+.chips::-webkit-scrollbar {
   display: none;
 }
 
-.property {
+.chip {
   flex: none;
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 8px 13px;
+  padding: 7px 13px;
   min-height: 38px;
   border: 0.5px solid var(--separator);
   border-radius: 20px;
@@ -106,25 +300,38 @@
   white-space: nowrap;
 }
 
-/* aria-selected = active property */
-.property[aria-selected='true'] {
+.chip[aria-selected='true'] {
   background: var(--primary);
   border-color: transparent;
   color: var(--primary-contrast);
 }
 
-.property-dot {
-  width: 7px;
-  height: 7px;
+.chip[aria-selected='true'] .prop-dot {
+  background: var(--primary-contrast) !important;
+}
+
+.prop-dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex: none;
 }
 
-.property[aria-selected='true'] .property-dot {
-  background: var(--primary-contrast) !important;
+.chip .prop-dot {
+  width: 7px;
+  height: 7px;
 }
 
-/* ---- Content ---- */
+.side-prop[aria-selected='true'] .prop-dot {
+  background: var(--primary) !important;
+}
+
+.prop-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .content {
   flex: 1;
   min-height: 0;
@@ -137,7 +344,7 @@
   display: none;
 }
 
-/* ---- Bottom tab bar ---- */
+/* ===== Bottom tab bar (phone) ===== */
 .tab-bar {
   flex: none;
   display: flex;
@@ -178,4 +385,29 @@
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.1px;
+}
+
+/* ===== Wide layout: show sidebar, hide bottom tabs + chips ===== */
+@container ms (min-width: 700px) {
+  .shell {
+    flex-direction: row;
+  }
+
+  .sidebar {
+    display: flex;
+  }
+
+  .tab-bar,
+  .chips,
+  .top-theme {
+    display: none;
+  }
+
+  .topbar {
+    padding: 28px 32px 16px;
+  }
+
+  .content {
+    padding: 22px 32px 32px;
+  }
 }

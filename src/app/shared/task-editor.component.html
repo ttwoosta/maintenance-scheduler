@@ -1,0 +1,97 @@
+@if (editor(); as ed) {
+  <div
+    class="dialog-root"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="title()"
+    cdkTrapFocus
+    [cdkTrapFocusAutoCapture]="true"
+    (keydown.escape)="store.closeEditor()"
+  >
+    <div class="backdrop" (click)="store.closeEditor()"></div>
+
+    <div class="sheet">
+      <header class="sheet-head">
+        <h2 class="sheet-title">{{ title() }}</h2>
+        <button class="close-btn" aria-label="Close" (click)="store.closeEditor()">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+        </button>
+      </header>
+
+      <label class="field-label" for="te-name">Task name</label>
+      <input
+        id="te-name"
+        class="text-input"
+        placeholder="e.g. Clean the gutters"
+        [value]="ed.draft.name"
+        (input)="onName($any($event.target).value)"
+      />
+
+      <span class="field-label">Type</span>
+      <ul
+        ngListbox
+        class="type-grid"
+        orientation="horizontal"
+        aria-label="Task type"
+        [value]="[ed.draft.iconKey]"
+        (valueChange)="onIconChange($event)"
+      >
+        @for (opt of store.iconOptions; track opt.key) {
+          <li ngOption [value]="opt.key" class="type-option" [attr.aria-label]="opt.label">
+            <app-task-icon [iconKey]="opt.key" [tint]="opt.tint" />
+          </li>
+        }
+      </ul>
+
+      <div class="number-row">
+        <div class="number-field">
+          <label class="field-label" for="te-min">Duration (min)</label>
+          <input
+            id="te-min"
+            class="text-input"
+            type="number"
+            min="5"
+            step="5"
+            [value]="ed.draft.durationMin"
+            (input)="onDuration($any($event.target).value)"
+          />
+        </div>
+        <div class="number-field">
+          <label class="field-label" for="te-due">Due in (days)</label>
+          <input
+            id="te-due"
+            class="text-input"
+            type="number"
+            step="1"
+            [value]="ed.draft.dueInDays"
+            (input)="onDue($any($event.target).value)"
+          />
+        </div>
+      </div>
+
+      <span class="field-label">Repeats</span>
+      <ul
+        ngListbox
+        class="recur-segment"
+        orientation="horizontal"
+        aria-label="Recurrence"
+        [value]="[ed.draft.recurrence]"
+        (valueChange)="onRecurrenceChange($event)"
+      >
+        @for (r of store.recurrences; track r) {
+          <li ngOption [value]="r" class="recur-option">{{ r }}</li>
+        }
+      </ul>
+
+      <footer class="sheet-foot">
+        @if (isEdit()) {
+          <button class="delete-btn" aria-label="Delete task" (click)="store.deleteFromEditor()">
+            <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3.5 5h11M7 5V3.5h4V5M5 5l.7 9.5h6.6L13 5" /></svg>
+          </button>
+        }
+        <button class="cancel-btn" (click)="store.closeEditor()">Cancel</button>
+        <button class="save-btn" (click)="store.saveEditor()">Save task</button>
+      </footer>
+    </div>
+  </div>
+}

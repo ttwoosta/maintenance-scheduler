@@ -1,70 +1,145 @@
-<div class="shell">
-  <header class="app-header">
-    <div class="header-top">
-      <div>
-        <p class="eyebrow">Maintenance</p>
-        <h1 class="screen-title">{{ title() }}</h1>
+<div class="viewport">
+  <div class="shell">
+    <!-- ===== SIDE MENU (wide / iPad) ===== -->
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.2 3.8a2.7 2.7 0 0 0-3 4.2l-5 5 1.8 1.8 5-5a2.7 2.7 0 0 0 4.2-3l-2 2-1.3-.4-.4-1.3 1.7-1.7Z" /></svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">Maintenance</span>
+          <span class="brand-sub">Scheduler</span>
+        </span>
       </div>
-      <button class="theme-toggle" (click)="toggleTheme()" aria-label="Toggle light or dark theme">
-        @if (theme() === 'dark') {
-          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16.5 11.5A6.5 6.5 0 1 1 8.5 3.5a5 5 0 0 0 8 8Z" /></svg>
-        } @else {
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <circle cx="10" cy="10" r="3.4" />
-            <path d="M10 2v1.6M10 16.4V18M2 10h1.6M16.4 10H18M4.3 4.3l1.2 1.2M14.5 14.5l1.2 1.2M15.7 4.3l-1.2 1.2M5.5 14.5l-1.2 1.2" />
-          </svg>
-        }
-      </button>
-    </div>
-    <p class="subtitle">{{ subtitle() }}</p>
 
-    <!-- Property switcher: horizontal single-select Listbox -->
-    <ul
-      ngListbox
-      class="properties"
-      orientation="horizontal"
-      aria-label="Choose property"
-      [value]="[store.activePropertyId()]"
-      (valueChange)="onPropertyChange($event)"
-    >
-      @for (p of store.properties; track p.id) {
-        <li ngOption [value]="p.id" class="property">
-          <span class="property-dot" [style.background]="p.dot"></span>
-          {{ p.name }}
-        </li>
-      }
-    </ul>
-  </header>
-
-  <main class="content">
-    @switch (screen()) {
-      @case ('prep') { <app-task-prep /> }
-      @case ('schedule') { <app-scheduling /> }
-      @case ('smart') { <app-smart-plan /> }
-    }
-  </main>
-
-  <nav class="tab-bar" aria-label="App sections">
-    @for (item of nav; track item.key) {
-      <button
-        class="nav-btn"
-        [class.active]="screen() === item.key"
-        [attr.aria-current]="screen() === item.key ? 'page' : null"
-        (click)="screen.set(item.key)"
+      <p class="side-heading">Property</p>
+      <ul
+        ngListbox
+        class="side-props"
+        aria-label="Choose property"
+        [value]="[store.activePropertyId()]"
+        (valueChange)="onPropertyChange($event)"
       >
-        @switch (item.key) {
-          @case ('prep') {
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l2 2 4-4.5" /><rect x="4" y="4" width="16" height="16" rx="4" /></svg>
-          }
-          @case ('schedule') {
-            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3" /><path d="M4 9h16M8 3v3M16 3v3" /></svg>
-          }
-          @case ('smart') {
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M5.5 8.5l2 1M18.5 8.5l-2 1M12 12l4 5H8l4-5Z" /><path d="M9 20h6" /></svg>
-          }
+        @for (p of store.properties; track p.id) {
+          <li ngOption [value]="p.id" class="side-prop">
+            <span class="prop-dot" [style.background]="p.dot"></span>
+            <span class="prop-name">{{ p.name }}</span>
+          </li>
         }
-        <span class="nav-label">{{ item.label }}</span>
+      </ul>
+
+      <p class="side-heading">Views</p>
+      <ul class="side-nav" role="tablist" aria-label="App sections">
+        @for (item of nav; track item.key) {
+          <li class="side-nav-li">
+            <button
+              role="tab"
+              class="side-nav-item"
+              [attr.aria-selected]="screen() === item.key"
+              (click)="screen.set(item.key)"
+            >
+              <ng-container [ngTemplateOutlet]="navIcon" [ngTemplateOutletContext]="{ key: item.key }" />
+              <span>{{ item.label }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+
+      <div class="side-spacer"></div>
+
+      <button class="side-theme" (click)="toggleTheme()" aria-label="Toggle light or dark theme">
+        <ng-container [ngTemplateOutlet]="themeIcon" />
+        <span>{{ theme() === 'dark' ? 'Light mode' : 'Dark mode' }}</span>
       </button>
-    }
-  </nav>
+    </aside>
+
+    <!-- ===== MAIN COLUMN ===== -->
+    <div class="maincol">
+      <header class="topbar">
+        <div class="topbar-row">
+          <div class="topbar-titles">
+            <p class="eyebrow">Maintenance</p>
+            <h1 class="screen-title">{{ title() }}</h1>
+            <p class="subtitle">{{ subtitle() }}</p>
+          </div>
+          <button class="top-theme" (click)="toggleTheme()" aria-label="Toggle light or dark theme">
+            <ng-container [ngTemplateOutlet]="themeIcon" />
+          </button>
+        </div>
+
+        <!-- Property chips: phone-only horizontal switcher -->
+        <ul
+          ngListbox
+          class="chips"
+          orientation="horizontal"
+          aria-label="Choose property"
+          [value]="[store.activePropertyId()]"
+          (valueChange)="onPropertyChange($event)"
+        >
+          @for (p of store.properties; track p.id) {
+            <li ngOption [value]="p.id" class="chip">
+              <span class="prop-dot" [style.background]="p.dot"></span>
+              <span class="prop-name">{{ p.name }}</span>
+            </li>
+          }
+        </ul>
+      </header>
+
+      <main class="content">
+        @switch (screen()) {
+          @case ('home') { <app-home [showPrep]="homeShowsPrep()" /> }
+          @case ('prep') { <app-task-prep /> }
+          @case ('schedule') { <app-scheduling /> }
+          @case ('smart') { <app-smart-plan /> }
+        }
+      </main>
+    </div>
+
+    <!-- ===== BOTTOM TAB BAR (narrow / phone) ===== -->
+    <nav class="tab-bar" aria-label="App sections">
+      @for (item of nav; track item.key) {
+        <button
+          class="nav-btn"
+          [class.active]="screen() === item.key"
+          [attr.aria-current]="screen() === item.key ? 'page' : null"
+          (click)="screen.set(item.key)"
+        >
+          <ng-container [ngTemplateOutlet]="navIcon" [ngTemplateOutletContext]="{ key: item.key }" />
+          <span class="nav-label">{{ item.label }}</span>
+        </button>
+      }
+    </nav>
+
+    <!-- ===== TASK EDITOR (renders only when store.editor() is set) ===== -->
+    <app-task-editor />
+  </div>
 </div>
+
+<!-- ---- Shared icon templates ---- -->
+<ng-template #navIcon let-key="key">
+  @switch (key) {
+    @case ('home') {
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-6.5 8 6.5" /><path d="M6.5 9.5V19h11V9.5" /></svg>
+    }
+    @case ('prep') {
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l2 2 4-4.5" /><rect x="4" y="4" width="16" height="16" rx="4" /></svg>
+    }
+    @case ('schedule') {
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3" /><path d="M4 9h16M8 3v3M16 3v3" /></svg>
+    }
+    @case ('smart') {
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M5.5 8.5l2 1M18.5 8.5l-2 1M12 12l4 5H8l4-5Z" /><path d="M9 20h6" /></svg>
+    }
+  }
+</ng-template>
+
+<ng-template #themeIcon>
+  @if (theme() === 'dark') {
+    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16.5 11.5A6.5 6.5 0 1 1 8.5 3.5a5 5 0 0 0 8 8Z" /></svg>
+  } @else {
+    <svg viewBox="0 0 20 20" aria-hidden="true">
+      <circle cx="10" cy="10" r="3.4" />
+      <path d="M10 2v1.6M10 16.4V18M2 10h1.6M16.4 10H18M4.3 4.3l1.2 1.2M14.5 14.5l1.2 1.2M15.7 4.3l-1.2 1.2M5.5 14.5l-1.2 1.2" />
+    </svg>
+  }
+</ng-template>

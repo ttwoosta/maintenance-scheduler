@@ -21,10 +21,8 @@ interface Group {
  *  • Tree     → structured, navigable list. Group nodes (Quick / Long) are
  *               ngTreeItem with an ngTreeGroup of child task nodes; the
  *               directive wires aria-expanded, aria-level and Arrow-key nav.
- *  • Combobox → pick an alternate suggested slot. ngCombobox on the <input>
- *               exposes [(value)] and [(expanded)]; the popup is an ng-template
- *               with ngComboboxPopup containing a Listbox marked ngComboboxWidget
- *               so the Combobox can track aria-activedescendant.
+ *  • Combobox → pick an alternate suggested slot. The popup is a Listbox of
+ *               candidate slots filtered by the user's unavailable days.
  */
 @Component({
   selector: 'app-smart-plan',
@@ -46,10 +44,8 @@ interface Group {
 export class SmartPlanComponent {
   protected readonly store = inject(MaintenanceStore);
 
+  /** Per-task chosen slot value; defaults to the top suggestion. */
   private readonly chosen = signal<Record<string, string>>({});
-  private readonly queries = signal<Record<string, string>>({});
-  private readonly expandeds = signal<Record<string, boolean>>({});
-  private readonly groupExpandeds = signal<Record<string, boolean>>({ quick: true, long: true });
 
   readonly groups = computed<Group[]>(() => {
     const active = this.store.tasksForProperty().filter((t) => !t.done);
@@ -61,12 +57,6 @@ export class SmartPlanComponent {
 
   slots(task: MaintenanceTask): Slot[] {
     return this.store.slotsFor(task);
-  }
-
-  filteredSlots(task: MaintenanceTask): Slot[] {
-    const q = (this.queries()[task.id] ?? '').toLowerCase().trim();
-    const all = this.store.slotsFor(task);
-    return q ? all.filter((s) => s.label.toLowerCase().includes(q)) : all;
   }
 
   chosenValue(task: MaintenanceTask): string {
@@ -81,47 +71,8 @@ export class SmartPlanComponent {
     return sel ? `Suggested: ${sel.label}` : 'No free slot — adjust your days';
   }
 
-  getQuery(task: MaintenanceTask): string {
-    const q = this.queries()[task.id];
-    if (q !== undefined) return q;
-    const slots = this.store.slotsFor(task);
-    return slots.find((s) => s.value === this.chosenValue(task))?.label ?? '';
-  }
-
-  setQuery(task: MaintenanceTask, q: string): void {
-    this.queries.update((m) => ({ ...m, [task.id]: q }));
-  }
-
-  isExpanded(task: MaintenanceTask): boolean {
-    return this.expandeds()[task.id] ?? false;
-  }
-
-  setExpanded(task: MaintenanceTask, v: boolean): void {
-    this.expandeds.update((m) => ({ ...m, [task.id]: v }));
-  }
-
-  getSelectedArray(task: MaintenanceTask): string[] {
-    const v = this.chosenValue(task);
-    return v ? [v] : [];
-  }
-
-  onCommit(task: MaintenanceTask, values: string[], combobox: Combobox): void {
-    const value = values[0];
-    if (value !== undefined) {
-      this.chosen.update((m) => ({ ...m, [task.id]: value }));
-      const label = this.store.slotsFor(task).find((s) => s.value === value)?.label ?? '';
-      this.queries.update((m) => ({ ...m, [task.id]: label }));
-    }
-    this.expandeds.update((m) => ({ ...m, [task.id]: false }));
-    combobox.element.focus();
-  }
-
-  isGroupExpanded(key: string): boolean {
-    return this.groupExpandeds()[key] ?? true;
-  }
-
-  setGroupExpanded(key: string, v: boolean): void {
-    this.groupExpandeds.update((m) => ({ ...m, [key]: v }));
+  onPick(task: MaintenanceTask, value: string) {
+    this.chosen.update((m) => ({ ...m, [task.id]: value }));
   }
 
   isUnavailable(key: string): boolean {

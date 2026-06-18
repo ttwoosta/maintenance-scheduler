@@ -1,79 +1,88 @@
-<div ngTabs class="schedule">
-  <!-- Aria Tabs: roving focus + aria-selected handled by the directives -->
-  <ul
-    ngTabList
-    class="tab-list"
-    aria-label="Task status"
-    [selectedTab]="activeTab()"
-    (selectedTabChange)="setActiveTab($event)"
-  >
-    <li ngTab value="upcoming" class="tab">
-      Upcoming
-      @if (upcoming().length) { <span class="tab-count">{{ upcoming().length }}</span> }
-    </li>
-    <li ngTab value="overdue" class="tab">
-      Overdue
-      @if (overdue().length) { <span class="tab-count overdue">{{ overdue().length }}</span> }
-    </li>
-    <li ngTab value="history" class="tab">History</li>
-  </ul>
+<div class="schedule">
+  <button class="new-task" (click)="store.openAdd()">
+    <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3.5v11M3.5 9h11" /></svg>
+    <span>New task</span>
+  </button>
 
-  @for (tab of ['upcoming', 'overdue', 'history']; track tab) {
-    <div ngTabPanel [value]="tab" class="tab-panel">
-      <ng-template ngTabContent>
-        @for (task of tasksFor($any(tab)); track task.id) {
-          <article class="task-card">
-            <header class="task-head">
-              <app-task-icon [iconKey]="task.iconKey" [tint]="task.tint" />
-              <div class="task-titles">
-                <h3 class="task-name" [class.done]="task.done">{{ task.name }}</h3>
-                <div class="task-sub">
-                  <span class="due" [attr.data-status]="dueStatus(task)">{{ dueLabel(task) }}</span>
-                  <span class="dot">· {{ store.durationLabel(task.durationMin) }}</span>
-                </div>
-              </div>
-            </header>
-
-            <!-- Toolbar: recurrence radio group + complete toggle -->
-            <div ngToolbar class="task-toolbar" aria-label="Task settings">
-              <span class="toolbar-label">Repeats</span>
-
-              <div ngToolbarWidgetGroup class="recur-group" role="radiogroup" aria-label="Recurrence">
-                @for (r of recurrences; track r) {
-                  <button
-                    ngToolbarWidget
-                    [value]="r"
-                    role="radio"
-                    class="recur-btn"
-                    [attr.aria-checked]="task.recurrence === r"
-                    (click)="store.setRecurrence(task.id, r)"
-                  >
-                    {{ r }}
-                  </button>
-                }
-              </div>
-
-              <button
-                ngToolbarWidget
-                [value]="'complete'"
-                class="complete-toggle"
-                [attr.aria-pressed]="task.done"
-                [attr.aria-label]="task.done ? 'Mark incomplete' : 'Mark complete'"
-                (click)="store.toggleDone(task.id)"
-              >
-                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7.5" /></svg>
-              </button>
-            </div>
-          </article>
-        } @empty {
-          <div class="empty">
-            <svg viewBox="0 0 40 40" aria-hidden="true">
-              <circle cx="20" cy="20" r="15" /><path d="M13 20.5l4.5 4.5L27 14" />
-            </svg>
-            <p>{{ emptyText($any(tab)) }}</p>
-          </div>
+  <div ngTabs>
+    <!-- Aria Tabs: roving focus + aria-selected handled by the directives -->
+    <ul
+      ngTabList
+      class="tab-list"
+      aria-label="Task status"
+      [selectedTab]="activeTab()"
+      (selectedTabChange)="setActiveTab($event)"
+    >
+      <li ngTab value="thisweek" class="tab">
+        This Week
+        @if (thisWeek().length) {
+          <span class="tab-count" [class.overdue]="hasOverdue()">{{ thisWeek().length }}</span>
         }
-      </ng-template>
-    </div>
-  }
+      </li>
+      <li ngTab value="nextweek" class="tab">
+        Next Week
+        @if (nextWeek().length) { <span class="tab-count">{{ nextWeek().length }}</span> }
+      </li>
+      <li ngTab value="history" class="tab">History</li>
+    </ul>
+
+    @for (tab of ['thisweek', 'nextweek', 'history']; track tab) {
+      <div ngTabPanel [value]="tab" class="tab-panel">
+        <ng-template ngTabContent>
+          @for (task of tasksFor($any(tab)); track task.id) {
+            <article class="task-card">
+              <button class="task-head" [attr.aria-label]="'Edit ' + task.name" (click)="store.openEdit(task.id)">
+                <app-task-icon [iconKey]="task.iconKey" [tint]="task.tint" />
+                <div class="task-titles">
+                  <h3 class="task-name" [class.done]="task.done">{{ task.name }}</h3>
+                  <div class="task-sub">
+                    <span class="due" [attr.data-status]="store.dueStatus(task)">{{ store.dueLabel(task) }}</span>
+                    <span class="dot">· {{ store.durationLabel(task.durationMin) }}</span>
+                  </div>
+                </div>
+              </button>
+
+              <!-- Toolbar: recurrence radio group + complete toggle -->
+              <div ngToolbar class="task-toolbar" aria-label="Task settings">
+                <span class="toolbar-label">Repeats</span>
+
+                <div ngToolbarWidgetGroup class="recur-group" role="radiogroup" aria-label="Recurrence">
+                  @for (r of store.recurrences; track r) {
+                    <button
+                      ngToolbarWidget
+                      [value]="r"
+                      role="radio"
+                      class="recur-btn"
+                      [attr.aria-checked]="task.recurrence === r"
+                      (click)="store.setRecurrence(task.id, r)"
+                    >
+                      {{ r }}
+                    </button>
+                  }
+                </div>
+
+                <button
+                  ngToolbarWidget
+                  [value]="task.id"
+                  class="complete-toggle"
+                  [attr.aria-pressed]="task.done"
+                  [attr.aria-label]="task.done ? 'Mark incomplete' : 'Mark complete'"
+                  (click)="store.toggleDone(task.id)"
+                >
+                  <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7.5" /></svg>
+                </button>
+              </div>
+            </article>
+          } @empty {
+            <div class="empty">
+              <svg viewBox="0 0 40 40" aria-hidden="true">
+                <circle cx="20" cy="20" r="15" /><path d="M13 20.5l4.5 4.5L27 14" />
+              </svg>
+              <p>{{ emptyText($any(tab)) }}</p>
+            </div>
+          }
+        </ng-template>
+      </div>
+    }
+  </div>
 </div>

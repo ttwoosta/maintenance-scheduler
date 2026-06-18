@@ -1,0 +1,80 @@
+<div ngAccordionGroup class="prep-list" [multiExpandable]="true">
+  @for (task of tasks(); track task.id) {
+    <div ngAccordionPanel #panel="ngAccordionPanel" class="prep-card">
+      <!-- Trigger: gets role="button" + aria-expanded + keyboard handling -->
+      <button ngAccordionTrigger [panel]="panel" class="prep-trigger">
+        <app-task-icon [iconKey]="task.iconKey" [tint]="task.tint" />
+
+        <span class="prep-titles">
+          <span class="prep-name">{{ task.name }}</span>
+          <span class="prep-meta">{{ metaLabel(task) }}</span>
+        </span>
+
+        <span class="prep-badge" [class.ready]="allReady(task)">{{ badge(task) }}</span>
+
+        <svg class="prep-chevron" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M3 5l4 4 4-4" />
+        </svg>
+      </button>
+
+      <!-- Panel content is lazily rendered via the AccordionContent template -->
+      <div ngAccordionContent>
+        <ng-template>
+          <div class="prep-panel">
+            <div class="prep-divider"></div>
+
+            @for (item of store.prepItems(task.id); track item.id) {
+              <div class="prep-row">
+                <button
+                  class="prep-check-btn"
+                  role="checkbox"
+                  [attr.aria-checked]="item.checked"
+                  [attr.aria-label]="item.label"
+                  (click)="store.togglePrepItem(task.id, item.id)"
+                >
+                  <span class="prep-check" [class.checked]="item.checked" aria-hidden="true">
+                    <svg viewBox="0 0 14 14"><path d="M2.5 7.5l3 3 6-6.5" /></svg>
+                  </span>
+                  @if (item.photo) {
+                    <img class="prep-photo" [src]="item.photo" alt="" />
+                  }
+                  <span class="prep-item-label" [class.checked]="item.checked">{{ item.label }}</span>
+                </button>
+
+                @if (item.photo) {
+                  <button class="row-action" aria-label="Remove photo" (click)="store.removePhoto(task.id, item.id)">
+                    <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="6.5" /><path d="M6.8 6.8l4.4 4.4M11.2 6.8l-4.4 4.4" /></svg>
+                  </button>
+                } @else {
+                  <button class="row-action" aria-label="Take photo" (click)="store.takePhoto(task.id, item.id)">
+                    <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h1.3l1-1.5h4.4l1 1.5h1.3A1.5 1.5 0 0 1 15 6.5v6A1.5 1.5 0 0 1 13.5 14h-9A1.5 1.5 0 0 1 3 12.5Z" /><circle cx="9" cy="9.3" r="2.4" /></svg>
+                  </button>
+                }
+
+                <button class="row-action ghost" aria-label="Remove item" (click)="store.removePrepItem(task.id, item.id)">
+                  <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3.5 5h11M7 5V3.5h4V5M5 5l.7 9.5h6.6L13 5" /></svg>
+                </button>
+              </div>
+            }
+
+            <div class="prep-add">
+              <input
+                class="prep-add-input"
+                placeholder="Add an item…"
+                [value]="draft(task.id)"
+                (input)="setDraft(task.id, $any($event.target).value)"
+                (keydown)="onDraftKey($event, task.id)"
+              />
+              <button class="prep-add-btn" aria-label="Add item" (click)="add(task.id)">Add</button>
+            </div>
+
+            <p class="prep-status" [class.ready]="allReady(task)" role="status">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7.5" /></svg>
+              {{ readyText(task) }}
+            </p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  }
+</div>

@@ -2,86 +2,66 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { Tabs, TabList, Tab, TabPanel, TabContent } from '@angular/aria/tabs';
 import { Toolbar, ToolbarWidget, ToolbarWidgetGroup } from '@angular/aria/toolbar';
 import { MaintenanceStore } from '../../services/maintenance-store';
-import { MaintenanceTask, Recurrence } from '../../models/task.model';
+import { MaintenanceTask } from '../../models/task.model';
 import { TaskIconComponent } from '../../shared/task-icon.component';
 
-type StatusKey = 'upcoming' | 'overdue' | 'history';
+type StatusKey = 'thisweek' | 'nextweek' | 'history';
 
 /**
  * SCREEN 2 — Scheduling & Status Notifications.
  *
  * Aria patterns:
- *  • Tabs    → switch between Upcoming / Overdue / History. ngTab manages
+ *  • Tabs    → switch between This Week / Next Week / History. ngTab manages
  *              aria-selected + roving focus (Arrow keys, Home/End).
  *  • Toolbar → per-task action strip. The recurrence picker is a
  *              ToolbarWidgetGroup of radios; the complete control is a
  *              ToolbarWidget toggle button exposing aria-pressed.
+ *
+ * Open work is split by due window: This Week = due in <7 days (incl. overdue),
+ * Next Week = 7+ days out, History = completed.
  */
 @Component({
   selector: 'app-scheduling',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    Tabs,
-    TabList,
-    Tab,
-    TabPanel,
-    TabContent,
-    Toolbar,
-    ToolbarWidget,
-    ToolbarWidgetGroup,
-    TaskIconComponent,
-  ],
+  imports: [Tabs, TabList, Tab, TabPanel, TabContent, Toolbar, ToolbarWidget, ToolbarWidgetGroup, TaskIconComponent],
   templateUrl: './scheduling.component.html',
   styleUrl: './scheduling.component.css',
 })
 export class SchedulingComponent {
   protected readonly store = inject(MaintenanceStore);
 
-  readonly activeTab = signal<StatusKey>('upcoming');
-  readonly recurrences: Recurrence[] = ['Weekly', 'Monthly', 'Quarterly'];
+  readonly activeTab = signal<StatusKey>('thisweek');
 
-  private statusOf(task: MaintenanceTask): StatusKey {
-    if (task.done) return 'history';
-    return task.dueInDays < 0 ? 'overdue' : 'upcoming';
-  }
+  private readonly open = computed(() => this.store.tasksForProperty().filter((t) => !t.done));
 
-  readonly upcoming = computed(() =>
-    this.store.tasksForProperty().filter((t) => this.statusOf(t) === 'upcoming'),
+  readonly thisWeek = computed(() =>
+    this.open()
+      .filter((t) => t.dueInDays < 7)
+      .sort((a, b) => a.dueInDays - b.dueInDays),
   );
-  readonly overdue = computed(() =>
-    this.store.tasksForProperty().filter((t) => this.statusOf(t) === 'overdue'),
+  readonly nextWeek = computed(() =>
+    this.open()
+      .filter((t) => t.dueInDays >= 7)
+      .sort((a, b) => a.dueInDays - b.dueInDays),
   );
-  readonly history = computed(() =>
-    this.store.tasksForProperty().filter((t) => this.statusOf(t) === 'history'),
-  );
+  readonly history = computed(() => this.store.tasksForProperty().filter((t) => t.done));
 
-  setActiveTab(v: string | undefined): void {
-    if (v) this.activeTab.set(v as StatusKey);
-  }
+  /** This Week count turns danger-colored when anything is overdue. */
+  readonly hasOverdue = computed(() => this.open().some((t) => t.dueInDays < 0));
 
   tasksFor(tab: StatusKey): MaintenanceTask[] {
-    return tab === 'upcoming' ? this.upcoming() : tab === 'overdue' ? this.overdue() : this.history();
+    return tab === 'thisweek' ? this.thisWeek() : tab === 'nextweek' ? this.nextWeek() : this.history();
   }
 
-  dueLabel(task: MaintenanceTask): string {
-    if (task.done) return 'Completed';
-    if (task.dueInDays < 0) return `Overdue by ${-task.dueInDays} day${task.dueInDays === -1 ? '' : 's'}`;
-    if (task.dueInDays === 0) return 'Due today';
-    return `Due in ${task.dueInDays} day${task.dueInDays === 1 ? '' : 's'}`;
-  }
-
-  dueStatus(task: MaintenanceTask): 'done' | 'overdue' | 'today' | 'upcoming' {
-    if (task.done) return 'done';
-    if (task.dueInDays < 0) return 'overdue';
-    if (task.dueInDays === 0) return 'today';
-    return 'upcoming';
+  setActiveTab(tab: string | undefined): void {
+    this.activeTab.set((tab ?? this.activeTab()) as StatusKey);
   }
 
   emptyText(tab: StatusKey): string {
-    return tab === 'upcoming'
-      ? 'No upcoming tasks — you’re all caught up.'
-      : tab === 'overdue'
-        ? 'Nothing overdue. Nice work.'
+    return tab === 'thisweek'
+      ? 'Nothing due this week — you’re all caught up.'
+      : tab === 'nextweek'
+        ? 'Nothing scheduled for next week yet.'
         : 'No completed tasks yet.';
   }
 }

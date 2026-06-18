@@ -1,0 +1,47 @@
+@if (state() === 'empty') {
+  <div class="empty-cta">
+    <button class="new-task big" (click)="store.openAdd()">
+      <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3.5v11M3.5 9h11" /></svg>
+      <span>New task</span>
+    </button>
+  </div>
+} @else {
+  <div class="home-head">
+    <h2 class="home-title">{{ heading() }}</h2>
+    <span class="home-summary" [class.overdue]="state() === 'overdue'">{{ summary() }}</span>
+  </div>
+
+  <button class="new-task" (click)="store.openAdd()">
+    <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3.5v11M3.5 9h11" /></svg>
+    <span>New task</span>
+  </button>
+
+  @for (task of list(); track task.id) {
+    <article class="task-card">
+      <button class="task-main" [attr.aria-label]="'Edit ' + task.name" (click)="store.openEdit(task.id)">
+        <app-task-icon [iconKey]="task.iconKey" [tint]="task.tint" />
+        <div class="task-titles">
+          <h3 class="task-name">{{ task.name }}</h3>
+          <div class="task-sub">
+            <span class="due" [attr.data-status]="store.dueStatus(task)">{{ store.dueLabel(task) }}</span>
+            <span class="dot">· {{ store.durationLabel(task.durationMin) }}</span>
+          </div>
+        </div>
+      </button>
+
+      <button
+        class="complete-toggle"
+        [attr.aria-pressed]="task.done"
+        [attr.aria-label]="task.done ? 'Mark incomplete' : 'Mark complete'"
+        (click)="store.toggleDone(task.id)"
+      >
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7.5" /></svg>
+      </button>
+    </article>
+  }
+
+  @if (showPrep() && list().length) {
+    <h2 class="home-title get-ready">Get ready</h2>
+    <app-prep-list [tasks]="list()" />
+  }
+}

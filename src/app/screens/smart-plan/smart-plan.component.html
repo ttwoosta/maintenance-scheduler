@@ -20,25 +20,17 @@
 <!-- Aria Tree: grouped, keyboard-navigable suggested schedule -->
 <ul ngTree #tree="ngTree" class="tree" aria-label="Suggested schedule grouped by duration">
   @for (group of groups(); track group.key) {
-    <li
-      ngTreeItem
-      #groupItem="ngTreeItem"
-      [parent]="tree"
-      [value]="group.key"
-      [expanded]="isGroupExpanded(group.key)"
-      (expandedChange)="setGroupExpanded(group.key, $event)"
-      class="tree-group-node"
-    >
-      <button class="group-row" (click)="setGroupExpanded(group.key, !isGroupExpanded(group.key))">
+    <li ngTreeItem #groupItem="ngTreeItem" [parent]="tree" [value]="group.key" [label]="group.title" class="tree-group-node">
+      <button class="group-row">
         <svg class="group-caret" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 3l4 4-4 4" /></svg>
         <span class="group-title">{{ group.title }}</span>
         <span class="group-count">{{ group.tasks.length }}</span>
       </button>
 
-      <ul class="tree-children" role="group">
-        <ng-template ngTreeItemGroup [ownedBy]="groupItem" #groupItems="ngTreeItemGroup">
+      <ul role="group" class="tree-children">
+        <ng-template ngTreeItemGroup #groupNodes="ngTreeItemGroup" [ownedBy]="groupItem">
           @for (task of group.tasks; track task.id) {
-            <li ngTreeItem [parent]="groupItems" [value]="task.id" class="slot-card">
+            <li ngTreeItem [parent]="groupNodes" [value]="task.id" [label]="task.name" class="slot-card">
               <div class="slot-head">
                 <app-task-icon [iconKey]="task.iconKey" [tint]="task.tint" />
                 <div class="slot-titles">
@@ -55,36 +47,16 @@
               </p>
 
               <!-- Combobox: choose an alternate slot -->
-              <div class="slot-combobox">
+              <div ngCombobox #combo="ngCombobox" class="slot-combobox" [value]="chosenValue(task)" (valueChange)="onPick(task, $event)">
                 <label class="slot-label" [attr.for]="'slot-' + task.id">Change slot</label>
                 <div class="combo-field">
-                  <input
-                    ngCombobox
-                    #combobox="ngCombobox"
-                    [id]="'slot-' + task.id"
-                    class="combo-input"
-                    [attr.aria-label]="'Choose a slot for ' + task.name"
-                    [value]="getQuery(task)"
-                    (valueChange)="setQuery(task, $event)"
-                    [expanded]="isExpanded(task)"
-                    (expandedChange)="setExpanded(task, $event)"
-                  />
+                  <input [id]="'slot-' + task.id" class="combo-input" readonly [value]="chosenValue(task)" [attr.aria-label]="'Choose a slot for ' + task.name" />
                   <svg class="combo-caret" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 5l4 4 4-4" /></svg>
                 </div>
 
-                <ng-template ngComboboxPopup [combobox]="combobox">
-                  <ul
-                    ngComboboxWidget
-                    ngListbox
-                    #listbox="ngListbox"
-                    class="combo-popup"
-                    [value]="getSelectedArray(task)"
-                    (valueChange)="onCommit(task, $event, combobox)"
-                    [activeDescendant]="listbox.activeDescendant()"
-                    [focusMode]="'activedescendant'"
-                    [selectionMode]="'explicit'"
-                  >
-                    @for (slot of filteredSlots(task); track slot.value) {
+                <ng-template ngComboboxPopup [combobox]="combo">
+                  <ul ngComboboxWidget ngListbox class="combo-popup">
+                    @for (slot of slots(task); track slot.value) {
                       <li ngOption [value]="slot.value" class="combo-option">{{ slot.label }}</li>
                     }
                   </ul>
