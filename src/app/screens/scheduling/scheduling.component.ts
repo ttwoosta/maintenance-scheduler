@@ -55,6 +55,10 @@ export class SchedulingComponent {
     this.store.tasksForProperty().filter((t) => this.statusOf(t) === 'history'),
   );
 
+  setActiveTab(v: string | undefined): void {
+    if (v) this.activeTab.set(v as StatusKey);
+  }
+
   tasksFor(tab: StatusKey): MaintenanceTask[] {
     return tab === 'upcoming' ? this.upcoming() : tab === 'overdue' ? this.overdue() : this.history();
   }

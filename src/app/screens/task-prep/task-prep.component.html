@@ -1,8 +1,8 @@
 <div ngAccordionGroup class="prep-list" [multiExpandable]="true">
   @for (task of store.tasksForProperty(); track task.id) {
-    <div ngAccordionPanel class="prep-card">
+    <div class="prep-card">
       <!-- Trigger: gets role="button" + aria-expanded + keyboard handling -->
-      <button ngAccordionTrigger class="prep-trigger">
+      <button ngAccordionTrigger [panel]="panel" class="prep-trigger">
         <app-task-icon [iconKey]="task.iconKey" [tint]="task.tint" />
 
         <span class="prep-titles">
@@ -27,16 +27,16 @@
       </button>
 
       <!-- Panel content is lazily rendered via the AccordionContent template -->
-      <div ngAccordionContent>
-        <ng-template>
+      <div ngAccordionPanel #panel="ngAccordionPanel">
+        <ng-template ngAccordionContent>
           <div class="prep-panel">
             <ul
               ngListbox
               class="prep-checklist"
               [multi]="true"
               [attr.aria-label]="task.name + ' prep checklist'"
-              [values]="selectedPrep(task)"
-              (valuesChange)="onPrepChange(task, $event)"
+              [value]="selectedPrep(task)"
+              (valueChange)="onPrepChange(task, $event)"
             >
               @for (item of task.prep; track $index) {
                 <li ngOption [value]="$index" class="prep-item">
@@ -56,7 +56,7 @@
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7.5" /></svg>
               {{
                 remaining(task) === 0
-                  ? 'All set — you’re ready to start'
+                  ? 'All set — you\'re ready to start'
                   : remaining(task) + (remaining(task) === 1 ? ' item' : ' items') + ' still to gather'
               }}
             </p>

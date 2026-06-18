@@ -24,8 +24,8 @@
       class="properties"
       orientation="horizontal"
       aria-label="Choose property"
-      [values]="[store.activePropertyId()]"
-      (valuesChange)="onPropertyChange($event)"
+      [value]="[store.activePropertyId()]"
+      (valueChange)="onPropertyChange($event)"
     >
       @for (p of store.properties; track p.id) {
         <li ngOption [value]="p.id" class="property">

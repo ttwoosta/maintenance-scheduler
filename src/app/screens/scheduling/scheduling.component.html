@@ -1,6 +1,12 @@
-<div ngTabs class="schedule" [(value)]="activeTab">
+<div ngTabs class="schedule">
   <!-- Aria Tabs: roving focus + aria-selected handled by the directives -->
-  <ul ngTabList class="tab-list" aria-label="Task status">
+  <ul
+    ngTabList
+    class="tab-list"
+    aria-label="Task status"
+    [selectedTab]="activeTab()"
+    (selectedTabChange)="setActiveTab($event)"
+  >
     <li ngTab value="upcoming" class="tab">
       Upcoming
       @if (upcoming().length) { <span class="tab-count">{{ upcoming().length }}</span> }
@@ -36,6 +42,7 @@
                 @for (r of recurrences; track r) {
                   <button
                     ngToolbarWidget
+                    [value]="r"
                     role="radio"
                     class="recur-btn"
                     [attr.aria-checked]="task.recurrence === r"
@@ -48,6 +55,7 @@
 
               <button
                 ngToolbarWidget
+                [value]="'complete'"
                 class="complete-toggle"
                 [attr.aria-pressed]="task.done"
                 [attr.aria-label]="task.done ? 'Mark incomplete' : 'Mark complete'"
