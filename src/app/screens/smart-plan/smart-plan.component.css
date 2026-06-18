@@ -1,0 +1,255 @@
+.avail-h {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 2px 9px;
+}
+
+.avail-days {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 18px;
+  scrollbar-width: none;
+}
+
+.avail-days::-webkit-scrollbar {
+  display: none;
+}
+
+.day {
+  flex: none;
+  width: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 9px 0;
+  border: 1px solid var(--separator);
+  border-radius: 13px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.day.weekend {
+  color: var(--text-secondary);
+}
+
+.day-dow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.day-num {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+/* aria-pressed = day marked unavailable */
+.day[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--danger-soft);
+  color: var(--danger);
+  text-decoration: line-through;
+}
+
+/* ---- Tree ---- */
+.tree,
+.tree-children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tree-group-node {
+  margin-bottom: 14px;
+}
+
+.group-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  text-align: left;
+}
+
+.group-caret {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: var(--text-secondary);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.2s ease;
+}
+
+/* aria-expanded handled by ngTreeItem */
+.tree-group-node[aria-expanded='true'] > .group-row .group-caret {
+  transform: rotate(90deg);
+}
+
+.group-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.group-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  border-radius: 20px;
+  padding: 2px 9px;
+}
+
+.slot-card {
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  padding: 13px 14px;
+  margin: 8px 0 0 8px;
+}
+
+.slot-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.slot-titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.slot-name {
+  display: block;
+  font-size: 15.5px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.slot-meta {
+  display: block;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.slot-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 11px 0 0;
+  padding: 9px 11px;
+  background: var(--primary-soft);
+  border-radius: var(--radius-control);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.slot-suggestion svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---- Combobox ---- */
+.slot-combobox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
+  position: relative;
+}
+
+.slot-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex: none;
+}
+
+.combo-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.combo-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 0.5px solid var(--separator);
+  border-radius: 9px;
+  padding: 9px 30px 9px 11px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.combo-caret {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: var(--text-secondary);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.combo-popup {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 4px;
+  position: absolute;
+  z-index: 10;
+  right: 0;
+  top: 100%;
+  min-width: 220px;
+  background: var(--surface);
+  border: 0.5px solid var(--separator);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.combo-option {
+  padding: 9px 11px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.combo-option[aria-selected='true'] {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.combo-option:hover,
+.combo-option[data-active] {
+  background: var(--surface-2);
+}

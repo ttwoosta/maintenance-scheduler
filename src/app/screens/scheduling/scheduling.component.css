@@ -1,0 +1,223 @@
+.schedule {
+  display: block;
+}
+
+.tab-list {
+  display: flex;
+  gap: 2px;
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 3px;
+  background: var(--surface-2);
+  border-radius: var(--radius-control);
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 8px 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Selected state is read straight from the directive's aria-selected */
+.tab[aria-selected='true'] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.tab-count {
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: var(--text-tertiary);
+}
+
+.tab[aria-selected='true'] .tab-count {
+  background: var(--primary);
+}
+
+.tab-count.overdue {
+  background: var(--danger);
+}
+
+.task-card {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 15px 16px;
+  margin-bottom: 12px;
+}
+
+.task-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.task-titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.task-name.done {
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+}
+
+.task-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.due {
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 20px;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+}
+
+.due[data-status='overdue'] {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.due[data-status='today'] {
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.due[data-status='done'] {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.dot {
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+}
+
+.task-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 13px;
+  padding-top: 13px;
+  border-top: 0.5px solid var(--separator);
+}
+
+.toolbar-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  flex: none;
+}
+
+.recur-group {
+  display: flex;
+  gap: 3px;
+  margin-left: auto;
+  padding: 3px;
+  background: var(--surface-2);
+  border-radius: 9px;
+}
+
+.recur-btn {
+  padding: 6px 11px;
+  min-height: 32px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.recur-btn[aria-checked='true'] {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.complete-toggle {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--text-tertiary);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.complete-toggle svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--primary-contrast);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+
+.complete-toggle[aria-pressed='true'] {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.complete-toggle[aria-pressed='true'] svg {
+  opacity: 1;
+}
+
+.empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-tertiary);
+}
+
+.empty svg {
+  width: 40px;
+  height: 40px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  margin-bottom: 12px;
+}
+
+.empty p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-secondary);
+}

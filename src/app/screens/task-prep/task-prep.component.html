@@ -1,0 +1,68 @@
+<div ngAccordionGroup class="prep-list" [multiExpandable]="true">
+  @for (task of store.tasksForProperty(); track task.id) {
+    <div ngAccordionPanel class="prep-card">
+      <!-- Trigger: gets role="button" + aria-expanded + keyboard handling -->
+      <button ngAccordionTrigger class="prep-trigger">
+        <app-task-icon [iconKey]="task.iconKey" [tint]="task.tint" />
+
+        <span class="prep-titles">
+          <span class="prep-name">{{ task.name }}</span>
+          <span class="prep-meta">{{ metaLabel(task) }}</span>
+        </span>
+
+        <span
+          class="prep-badge"
+          [class.ready]="store.gatheredCount(task) === task.prep.length"
+        >
+          {{
+            store.gatheredCount(task) === task.prep.length
+              ? 'Ready'
+              : store.gatheredCount(task) + '/' + task.prep.length
+          }}
+        </span>
+
+        <svg class="prep-chevron" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M3 5l4 4 4-4" />
+        </svg>
+      </button>
+
+      <!-- Panel content is lazily rendered via the AccordionContent template -->
+      <div ngAccordionContent>
+        <ng-template>
+          <div class="prep-panel">
+            <ul
+              ngListbox
+              class="prep-checklist"
+              [multi]="true"
+              [attr.aria-label]="task.name + ' prep checklist'"
+              [values]="selectedPrep(task)"
+              (valuesChange)="onPrepChange(task, $event)"
+            >
+              @for (item of task.prep; track $index) {
+                <li ngOption [value]="$index" class="prep-item">
+                  <span class="prep-check" aria-hidden="true">
+                    <svg viewBox="0 0 14 14"><path d="M2.5 7.5l3 3 6-6.5" /></svg>
+                  </span>
+                  <span class="prep-item-label">{{ item }}</span>
+                </li>
+              }
+            </ul>
+
+            <p
+              class="prep-status"
+              [class.ready]="remaining(task) === 0"
+              role="status"
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7.5" /></svg>
+              {{
+                remaining(task) === 0
+                  ? 'All set — you’re ready to start'
+                  : remaining(task) + (remaining(task) === 1 ? ' item' : ' items') + ' still to gather'
+              }}
+            </p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  }
+</div>
