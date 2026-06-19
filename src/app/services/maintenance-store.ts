@@ -10,7 +10,8 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, storage } from '../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { AuthService } from './auth.service';
 import {
   Bucket,
@@ -283,10 +284,13 @@ export class MaintenanceStore {
     updateDoc(doc(db, 'tasks', taskId, 'prep', itemId), { photo, checked: true }).catch(console.error);
   }
 
-  /** Persist an uploaded photo (data URL) for a prep item and mark it checked. */
-  uploadPhoto(taskId: string, itemId: string, dataUrl: string) {
-    if (!this.isOwner(taskId)) return console.error('uploadPhoto: not owner');
-    updateDoc(doc(db, 'tasks', taskId, 'prep', itemId), { photo: dataUrl, checked: true }).catch(console.error);
+  /** Upload a photo file to Firebase Storage and store the download URL in Firestore. */
+  async uploadPhoto(taskId: string, itemId: string, file: File): Promise<void> {
+    if (!this.isOwner(taskId)) { console.error('uploadPhoto: not owner'); return; }
+    const storageRef = ref(storage, `prep-photos/${taskId}/${itemId}/${file.name}`);
+    const snapshot = await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(snapshot.ref);
+    await updateDoc(doc(db, 'tasks', taskId, 'prep', itemId), { photo: url, checked: true });
   }
 
   removePhoto(taskId: string, itemId: string) {

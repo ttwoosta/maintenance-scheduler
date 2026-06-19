@@ -87,12 +87,7 @@ export class PrepListComponent {
     const input = event.target as HTMLInputElement | null;
     const file = input?.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      this.store.uploadPhoto(taskId, itemId, dataUrl);
-      if (input) input.value = '';
-    };
-    reader.readAsDataURL(file);
+    this.store.uploadPhoto(taskId, itemId, file).catch(console.error);
+    if (input) input.value = '';
   }
 }
