@@ -38,7 +38,9 @@
     "indexes": "firestore.indexes.json"
   },
   "auth": {
-    "providers": {}
+    "providers": {
+      "emailPassword": true
+    }
   },
   "storage": {
     "rules": "storage.rules"

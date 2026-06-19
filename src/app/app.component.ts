@@ -1,12 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
+import { RouterOutlet } from '@angular/router';
 import { Listbox, Option } from '@angular/aria/listbox';
 import { MaintenanceStore } from './services/maintenance-store';
+import { AuthService } from './services/auth.service';
 import { HomeComponent } from './screens/home/home.component';
 import { TaskPrepComponent } from './screens/task-prep/task-prep.component';
 import { SchedulingComponent } from './screens/scheduling/scheduling.component';
 import { SmartPlanComponent } from './screens/smart-plan/smart-plan.component';
 import { TaskEditorComponent } from './shared/task-editor.component';
+import { LoginComponent } from './screens/login/login.component';
 
 type Screen = 'home' | 'prep' | 'schedule' | 'smart';
 
@@ -28,6 +31,7 @@ const DEFAULT_ACCENT = '#2F6B4F';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     NgTemplateOutlet,
+    RouterOutlet,
     Listbox,
     Option,
     HomeComponent,
@@ -35,6 +39,7 @@ const DEFAULT_ACCENT = '#2F6B4F';
     SchedulingComponent,
     SmartPlanComponent,
     TaskEditorComponent,
+    LoginComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
@@ -49,6 +54,7 @@ const DEFAULT_ACCENT = '#2F6B4F';
 })
 export class AppComponent {
   protected readonly store = inject(MaintenanceStore);
+  protected readonly auth = inject(AuthService);
 
   readonly screen = signal<Screen>('home');
   readonly theme = signal<'light' | 'dark'>('light');

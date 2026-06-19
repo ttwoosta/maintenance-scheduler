@@ -1,3 +1,13 @@
+@if (!auth.initialized()) {
+  <!-- Auth state not yet resolved — avoid a flicker to login -->
+  <div class="auth-loading" role="status" aria-label="Loading…">
+    <div class="auth-spinner"></div>
+  </div>
+} @else if (!auth.isAuthenticated()) {
+  <!-- Not signed in — render login inline (router-outlet handles /login URL) -->
+  <app-login />
+  <router-outlet />
+} @else {
 <div class="viewport">
   <div class="shell">
     <!-- ===== SIDE MENU (wide / iPad) ===== -->
@@ -120,6 +130,7 @@
     <app-task-editor />
   </div>
 </div>
+} <!-- end @else authenticated -->
 
 <!-- ---- Shared icon templates ---- -->
 <ng-template #navIcon let-key="key">
