@@ -11,10 +11,6 @@
     <span class="home-summary" [class.overdue]="state() === 'overdue'">{{ summary() }}</span>
   </div>
 
-  <button class="new-task" (click)="store.openAdd()">
-    <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3.5v11M3.5 9h11" /></svg>
-    <span>New task</span>
-  </button>
 
   @for (task of list(); track task.id) {
     <article class="task-card">

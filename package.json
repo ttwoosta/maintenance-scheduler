@@ -7,6 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "emulators:start": "npx -y firebase-tools emulators:start --import=.firebase/emulator-data --export-on-exit",
+    "emulators:export": "npx -y firebase-tools emulators:export .firebase/emulator-data",
     "seed": "npm run seed:local",
     "seed:local": "SEED_TARGET=local npx tsx scripts/seed.ts",
     "seed:cloud": "SEED_TARGET=cloud npx tsx scripts/seed.ts",
