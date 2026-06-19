@@ -57,3 +57,18 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Deploy to Google Cloud
+
+```
+npx -y firebase-tools login
+npx -y firebase-tools deploy --only hosting
+```
+
+```
+✔  Deploy complete!
+
+Project Console: https://console.firebase.google.com/project/rental-manager-bc6ba/overview
+Hosting URL: https://rental-manager-bc6ba.web.app
+
+```

@@ -36,9 +36,6 @@ export class PrepListComponent {
   /** Tasks to show prep for (Home passes its week subset; Prep passes all). */
   readonly tasks = input.required<MaintenanceTask[]>();
 
-  /** Panels currently expanded (two-way bound to the Accordion). */
-  readonly expanded = signal<string[]>(['mc-lawn']);
-
   /** Per-task draft text for the "add an item" field. */
   private readonly drafts = signal<Record<string, string>>({});
 

@@ -1,7 +1,6 @@
 <div ngAccordionGroup class="prep-list" [multiExpandable]="true">
   @for (task of tasks(); track task.id) {
-    <div ngAccordionPanel #panel="ngAccordionPanel" class="prep-card">
-      <!-- Trigger: gets role="button" + aria-expanded + keyboard handling -->
+    <div class="prep-card">
       <button ngAccordionTrigger [panel]="panel" class="prep-trigger">
         <app-task-icon [iconKey]="task.iconKey" [tint]="task.tint" />
 
@@ -17,9 +16,8 @@
         </svg>
       </button>
 
-      <!-- Panel content is lazily rendered via the AccordionContent template -->
-      <div ngAccordionContent>
-        <ng-template>
+      <div ngAccordionPanel #panel="ngAccordionPanel">
+        <ng-template ngAccordionContent>
           <div class="prep-panel">
             <div class="prep-divider"></div>
 

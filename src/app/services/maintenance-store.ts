@@ -1,5 +1,6 @@
-import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, effect, inject, signal } from '@angular/core';
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -94,29 +95,17 @@ export class MaintenanceStore {
 
   private readonly tasks = signal<MaintenanceTask[]>([]);
 
-  /** Per-task prep checklist (in-memory). Each item owns its checked + photo state. */
+  /** Per-task prep checklist, kept in sync with `tasks/{id}/prep` subcollections. */
   private readonly prep = signal<Record<string, PrepItem[]>>({});
-
-  private uid = 0;
 
   constructor() {
     const destroyRef = inject(DestroyRef);
 
-    const unsubscribe = onSnapshot(
+    // --- tasks ---
+    const unsubTasks = onSnapshot(
       TASKS,
       (snapshot) => {
-        const loaded = snapshot.docs.map(
-          (d) => ({ id: d.id, ...d.data() }) as MaintenanceTask,
-        );
-        this.tasks.set(loaded);
-        // Initialize prep for any task that doesn't have an entry yet.
-        this.prep.update((map) => {
-          const next = { ...map };
-          for (const t of loaded) {
-            if (!next[t.id]) next[t.id] = [];
-          }
-          return next;
-        });
+        this.tasks.set(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as MaintenanceTask));
         this.loading.set(false);
       },
       (err) => {
@@ -125,7 +114,41 @@ export class MaintenanceStore {
       },
     );
 
-    destroyRef.onDestroy(unsubscribe);
+    // --- prep: one listener per task in the active property ---
+    const prepUnsubscribers = new Map<string, () => void>();
+
+    effect(() => {
+      const tasks = this.tasksForProperty();
+      const taskIds = new Set(tasks.map((t) => t.id));
+
+      // Drop listeners for tasks no longer visible.
+      for (const [id, unsub] of prepUnsubscribers) {
+        if (!taskIds.has(id)) {
+          unsub();
+          prepUnsubscribers.delete(id);
+        }
+      }
+
+      // Open listeners for newly visible tasks.
+      for (const task of tasks) {
+        if (!prepUnsubscribers.has(task.id)) {
+          const unsub = onSnapshot(
+            collection(db, 'tasks', task.id, 'prep'),
+            (snap) => {
+              const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PrepItem);
+              this.prep.update((map) => ({ ...map, [task.id]: items }));
+            },
+            console.error,
+          );
+          prepUnsubscribers.set(task.id, unsub);
+        }
+      }
+    });
+
+    destroyRef.onDestroy(() => {
+      unsubTasks();
+      for (const unsub of prepUnsubscribers.values()) unsub();
+    });
   }
 
   // ---- derived ----
@@ -209,42 +232,32 @@ export class MaintenanceStore {
     });
   }
 
-  // ---- prep checklist mutations (in-memory) ----
-  private patchPrep(taskId: string, fn: (items: PrepItem[]) => PrepItem[]) {
-    this.prep.update((map) => ({ ...map, [taskId]: fn((map[taskId] ?? []).map((i) => ({ ...i }))) }));
-  }
-
+  // ---- prep checklist mutations (Firestore: tasks/{taskId}/prep/{itemId}) ----
   togglePrepItem(taskId: string, itemId: string) {
-    this.patchPrep(taskId, (items) =>
-      items.map((i) => (i.id === itemId ? { ...i, checked: !i.checked } : i)),
-    );
+    const item = this.prep()[taskId]?.find((i) => i.id === itemId);
+    if (item) {
+      updateDoc(doc(db, 'tasks', taskId, 'prep', itemId), { checked: !item.checked }).catch(console.error);
+    }
   }
 
   addPrepItem(taskId: string, label: string) {
     const text = label.trim();
     if (!text) return;
-    this.patchPrep(taskId, (items) => [
-      ...items,
-      { id: `it${++this.uid}`, label: text, checked: false, photo: null },
-    ]);
+    addDoc(collection(db, 'tasks', taskId, 'prep'), { label: text, checked: false, photo: null }).catch(console.error);
   }
 
   removePrepItem(taskId: string, itemId: string) {
-    this.patchPrep(taskId, (items) => items.filter((i) => i.id !== itemId));
+    deleteDoc(doc(db, 'tasks', taskId, 'prep', itemId)).catch(console.error);
   }
 
   /** Capture a photo for a prep item (demo: assigns a stock image + checks it). */
   takePhoto(taskId: string, itemId: string) {
     const photo = DEMO_PHOTOS[Math.floor(Math.random() * DEMO_PHOTOS.length)];
-    this.patchPrep(taskId, (items) =>
-      items.map((i) => (i.id === itemId ? { ...i, photo, checked: true } : i)),
-    );
+    updateDoc(doc(db, 'tasks', taskId, 'prep', itemId), { photo, checked: true }).catch(console.error);
   }
 
   removePhoto(taskId: string, itemId: string) {
-    this.patchPrep(taskId, (items) =>
-      items.map((i) => (i.id === itemId ? { ...i, photo: null } : i)),
-    );
+    updateDoc(doc(db, 'tasks', taskId, 'prep', itemId), { photo: null }).catch(console.error);
   }
 
   // ---- task mutations (Firestore) ----
@@ -274,7 +287,6 @@ export class MaintenanceStore {
       done: false,
     };
     setDoc(ref, task).catch(console.error);
-    this.prep.update((map) => ({ ...map, [id]: [] }));
     return id;
   }
 
@@ -292,6 +304,10 @@ export class MaintenanceStore {
   }
 
   deleteTask(id: string) {
+    // Delete prep items first (Firestore doesn't cascade-delete subcollections).
+    for (const item of this.prep()[id] ?? []) {
+      deleteDoc(doc(db, 'tasks', id, 'prep', item.id)).catch(console.error);
+    }
     deleteDoc(doc(TASKS, id)).catch(console.error);
     this.prep.update((map) => {
       const next = { ...map };

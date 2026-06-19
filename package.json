@@ -6,7 +6,9 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "seed": "npx tsx scripts/seed.ts",
+    "deploy": "ng build && XDG_CONFIG_HOME=$HOME/.firebase-config npx -y firebase-tools deploy --only hosting"
   },
   "private": true,
   "packageManager": "npm@11.6.2",
