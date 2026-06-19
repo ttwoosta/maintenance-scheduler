@@ -5,10 +5,13 @@ import {
   deleteDoc,
   doc,
   onSnapshot,
+  query,
   setDoc,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { AuthService } from './auth.service';
 import {
   Bucket,
   DayOption,
@@ -44,6 +47,7 @@ const TASKS = collection(db, 'tasks');
  */
 @Injectable({ providedIn: 'root' })
 export class MaintenanceStore {
+  private readonly auth = inject(AuthService);
   // ---- reference data ----
   readonly properties: Property[] = [
     { id: 'p1', name: 'Maple Court', dot: '#2F6B4F' },
@@ -100,19 +104,38 @@ export class MaintenanceStore {
 
   constructor() {
     const destroyRef = inject(DestroyRef);
+    const authService = this.auth;
 
-    // --- tasks ---
-    const unsubTasks = onSnapshot(
-      TASKS,
-      (snapshot) => {
-        this.tasks.set(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as MaintenanceTask));
+    // --- tasks: listen only to the signed-in user's tasks ---
+    let unsubTasks: (() => void) | null = null;
+    effect(() => {
+      const user = authService.user();
+      // Clean up any previous listener
+      if (unsubTasks) {
+        unsubTasks();
+        unsubTasks = null;
+      }
+
+      if (!user) {
+        // No user signed in: clear tasks and stop loading once initialized
+        this.tasks.set([]);
         this.loading.set(false);
-      },
-      (err) => {
-        console.error('Firestore tasks snapshot error', err);
-        this.loading.set(false);
-      },
-    );
+        return;
+      }
+
+      const q = query(TASKS, where('ownerId', '==', user.uid));
+      unsubTasks = onSnapshot(
+        q,
+        (snapshot) => {
+          this.tasks.set(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as MaintenanceTask));
+          this.loading.set(false);
+        },
+        (err) => {
+          console.error('Firestore tasks snapshot error', err);
+          this.loading.set(false);
+        },
+      );
+    });
 
     // --- prep: one listener per task in the active property ---
     const prepUnsubscribers = new Map<string, () => void>();
@@ -146,7 +169,7 @@ export class MaintenanceStore {
     });
 
     destroyRef.onDestroy(() => {
-      unsubTasks();
+      if (unsubTasks) unsubTasks();
       for (const unsub of prepUnsubscribers.values()) unsub();
     });
   }
@@ -234,6 +257,7 @@ export class MaintenanceStore {
 
   // ---- prep checklist mutations (Firestore: tasks/{taskId}/prep/{itemId}) ----
   togglePrepItem(taskId: string, itemId: string) {
+    if (!this.isOwner(taskId)) return console.error('togglePrepItem: not owner');
     const item = this.prep()[taskId]?.find((i) => i.id === itemId);
     if (item) {
       updateDoc(doc(db, 'tasks', taskId, 'prep', itemId), { checked: !item.checked }).catch(console.error);
@@ -241,32 +265,38 @@ export class MaintenanceStore {
   }
 
   addPrepItem(taskId: string, label: string) {
+    if (!this.isOwner(taskId)) return console.error('addPrepItem: not owner');
     const text = label.trim();
     if (!text) return;
     addDoc(collection(db, 'tasks', taskId, 'prep'), { label: text, checked: false, photo: null }).catch(console.error);
   }
 
   removePrepItem(taskId: string, itemId: string) {
+    if (!this.isOwner(taskId)) return console.error('removePrepItem: not owner');
     deleteDoc(doc(db, 'tasks', taskId, 'prep', itemId)).catch(console.error);
   }
 
   /** Capture a photo for a prep item (demo: assigns a stock image + checks it). */
   takePhoto(taskId: string, itemId: string) {
+    if (!this.isOwner(taskId)) return console.error('takePhoto: not owner');
     const photo = DEMO_PHOTOS[Math.floor(Math.random() * DEMO_PHOTOS.length)];
     updateDoc(doc(db, 'tasks', taskId, 'prep', itemId), { photo, checked: true }).catch(console.error);
   }
 
   removePhoto(taskId: string, itemId: string) {
+    if (!this.isOwner(taskId)) return console.error('removePhoto: not owner');
     updateDoc(doc(db, 'tasks', taskId, 'prep', itemId), { photo: null }).catch(console.error);
   }
 
   // ---- task mutations (Firestore) ----
   toggleDone(taskId: string) {
+    if (!this.isOwner(taskId)) return console.error('toggleDone: not owner');
     const task = this.tasks().find((t) => t.id === taskId);
     if (task) updateDoc(doc(TASKS, taskId), { done: !task.done }).catch(console.error);
   }
 
   setRecurrence(taskId: string, recurrence: Recurrence) {
+    if (!this.isOwner(taskId)) return console.error('setRecurrence: not owner');
     updateDoc(doc(TASKS, taskId), { recurrence }).catch(console.error);
   }
 
@@ -275,7 +305,14 @@ export class MaintenanceStore {
     const ref = doc(TASKS);
     const id = ref.id;
     const min = Math.max(5, Math.round(draft.durationMin || 0));
+    const user = this.auth.user();
+    if (!user) {
+      console.error('addTask: user not signed in');
+      return id;
+    }
+
     const task: Omit<MaintenanceTask, 'id'> = {
+      ownerId: user.uid,
       propertyId: this.activePropertyId(),
       name: draft.name.trim() || 'Untitled task',
       iconKey: draft.iconKey,
@@ -291,6 +328,7 @@ export class MaintenanceStore {
   }
 
   updateTask(id: string, draft: TaskDraft) {
+    if (!this.isOwner(id)) return console.error('updateTask: not owner');
     const min = Math.max(5, Math.round(draft.durationMin || 0));
     updateDoc(doc(TASKS, id), {
       name: draft.name.trim() || 'Untitled task',
@@ -304,6 +342,8 @@ export class MaintenanceStore {
   }
 
   deleteTask(id: string) {
+    if (!this.isOwner(id)) return console.error('deleteTask: not owner');
+
     // Delete prep items first (Firestore doesn't cascade-delete subcollections).
     for (const item of this.prep()[id] ?? []) {
       deleteDoc(doc(db, 'tasks', id, 'prep', item.id)).catch(console.error);
@@ -314,6 +354,14 @@ export class MaintenanceStore {
       delete next[id];
       return next;
     });
+  }
+
+  /** Return true if the currently signed-in user owns the task. */
+  private isOwner(taskId: string): boolean {
+    const user = this.auth.user();
+    if (!user) return false;
+    const t = this.tasks().find((x) => x.id === taskId);
+    return !!t && t.ownerId === user.uid;
   }
 
   iconOption(key: IconKey): IconOption {

@@ -75,6 +75,12 @@
           <button class="top-theme" (click)="toggleTheme()" aria-label="Toggle light or dark theme">
             <ng-container [ngTemplateOutlet]="themeIcon" />
           </button>
+          <div class="topbar-actions">
+            <button class="profile-btn" (click)="signOut()" aria-label="Account">
+              <span class="avatar" aria-hidden="true">{{ userInitials() }}</span>
+              <span class="profile-name">{{ userName() }}</span>
+            </button>
+          </div>
         </div>
 
         <!-- Property chips: phone-only horizontal switcher -->

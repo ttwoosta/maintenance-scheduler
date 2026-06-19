@@ -28,6 +28,8 @@ export interface Property {
 
 export interface MaintenanceTask {
   id: string;
+  /** UID of the user who created / owns this task. */
+  ownerId: string;
   propertyId: string;
   name: string;
   iconKey: IconKey;
