@@ -86,11 +86,17 @@
       </header>
 
       <main class="content">
-        @switch (screen()) {
-          @case ('home') { <app-home [showPrep]="homeShowsPrep()" /> }
-          @case ('prep') { <app-task-prep /> }
-          @case ('schedule') { <app-scheduling /> }
-          @case ('smart') { <app-smart-plan /> }
+        @if (store.loading()) {
+          <div class="loading" role="status" aria-label="Loading tasks">
+            <div class="spinner" aria-hidden="true"></div>
+          </div>
+        } @else {
+          @switch (screen()) {
+            @case ('home') { <app-home [showPrep]="homeShowsPrep()" /> }
+            @case ('prep') { <app-task-prep /> }
+            @case ('schedule') { <app-scheduling /> }
+            @case ('smart') { <app-smart-plan /> }
+          }
         }
       </main>
     </div>

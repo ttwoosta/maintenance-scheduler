@@ -1,4 +1,13 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  setDoc,
+  updateDoc,
+} from 'firebase/firestore';
+import { db } from '../firebase';
 import {
   Bucket,
   DayOption,
@@ -22,12 +31,15 @@ const DEMO_PHOTOS = [
   'demo-photos/06.png',
 ];
 
+const TASKS = collection(db, 'tasks');
+
 /**
  * Central signal store for the Maintenance Scheduler.
  *
- * Everything the screens read is derived from signals here, so a single root
- * provider keeps the Home, Prep, Schedule and Smart Plan views in sync. The
- * same store shape can back the sibling apps by swapping the seed data.
+ * Tasks are persisted in Firestore (`tasks` collection). All other state
+ * (prep checklists, scheduling preferences, UI state) is kept in-memory.
+ * The `onSnapshot` listener keeps the local `tasks` signal in sync with
+ * Firestore in real time.
  */
 @Injectable({ providedIn: 'root' })
 export class MaintenanceStore {
@@ -77,60 +89,43 @@ export class MaintenanceStore {
    */
   readonly editor = signal<{ mode: 'add' | 'edit'; id: string | null; draft: TaskDraft } | null>(null);
 
-  private readonly tasks = signal<MaintenanceTask[]>([
-    { id: 'mc-lawn', propertyId: 'p1', name: 'Mow the lawn', iconKey: 'lawn', tint: '#4CA57C', durationMin: 25, bucket: 'quick', recurrence: 'Weekly', dueInDays: 2, done: false },
-    { id: 'mc-boiler', propertyId: 'p1', name: 'Service the boiler', iconKey: 'boiler', tint: '#E08A3C', durationMin: 180, bucket: 'long', recurrence: 'Quarterly', dueInDays: -3, done: false },
-    { id: 'mc-gutter', propertyId: 'p1', name: 'Clean the gutters', iconKey: 'gutter', tint: '#3E8FD0', durationMin: 150, bucket: 'long', recurrence: 'Quarterly', dueInDays: 9, done: false },
-    { id: 'mc-alarm', propertyId: 'p1', name: 'Test smoke alarms', iconKey: 'alarm', tint: '#D9544D', durationMin: 15, bucket: 'quick', recurrence: 'Monthly', dueInDays: -1, done: false },
-    { id: 'mc-filter', propertyId: 'p1', name: 'Replace AC filter', iconKey: 'filter', tint: '#7C6BC4', durationMin: 10, bucket: 'quick', recurrence: 'Monthly', dueInDays: 5, done: false },
-    { id: 'mc-rad', propertyId: 'p1', name: 'Bleed the radiators', iconKey: 'radiator', tint: '#C99A2E', durationMin: 20, bucket: 'quick', recurrence: 'Quarterly', dueInDays: -10, done: true },
-    { id: 'bl-lawn', propertyId: 'p2', name: 'Mow the lawn', iconKey: 'lawn', tint: '#4CA57C', durationMin: 30, bucket: 'quick', recurrence: 'Weekly', dueInDays: 1, done: false },
-    { id: 'bl-hedge', propertyId: 'p2', name: 'Trim the hedges', iconKey: 'wrench', tint: '#5FA855', durationMin: 90, bucket: 'long', recurrence: 'Monthly', dueInDays: 4, done: false },
-    { id: 'bl-boiler', propertyId: 'p2', name: 'Service the boiler', iconKey: 'boiler', tint: '#E08A3C', durationMin: 180, bucket: 'long', recurrence: 'Quarterly', dueInDays: -2, done: false },
-    { id: 'hv-gutter', propertyId: 'p3', name: 'Clean the gutters', iconKey: 'gutter', tint: '#3E8FD0', durationMin: 120, bucket: 'long', recurrence: 'Quarterly', dueInDays: 6, done: false },
-    { id: 'hv-alarm', propertyId: 'p3', name: 'Test smoke alarms', iconKey: 'alarm', tint: '#D9544D', durationMin: 15, bucket: 'quick', recurrence: 'Monthly', dueInDays: 3, done: false },
-    { id: 'hv-paint', propertyId: 'p3', name: 'Touch up window paint', iconKey: 'wrench', tint: '#9A8B6B', durationMin: 240, bucket: 'long', recurrence: 'Quarterly', dueInDays: -5, done: false },
-  ]);
+  /** True while the first Firestore snapshot is in flight. */
+  readonly loading = signal(true);
 
-  /** Seed prep labels, expanded into PrepItem rows in the constructor. */
-  private readonly prepSeed: Record<string, string[]> = {
-    'mc-lawn': ['Petrol can filled', 'Engine oil level', 'Tyre pressure ~22 psi', 'Safety goggles', 'Grass collection bags'],
-    'mc-boiler': ['Boiler service kit', 'CO test meter', 'Replacement seals & gaskets', 'Service log book'],
-    'mc-gutter': ['Extension ladder', 'Gutter scoop', 'Heavy-duty gloves', 'Bucket & hose', 'Spotter on site'],
-    'mc-alarm': ['9V batteries ×4', 'Step stool', 'Alarm test tool'],
-    'mc-filter': ['16×25×1 filter', 'Vacuum / soft brush'],
-    'mc-rad': ['Radiator key', 'Cloth & drip tray'],
-    'bl-lawn': ['Petrol can filled', 'Tyre pressure ~22 psi', 'Grass bags'],
-    'bl-hedge': ['Hedge trimmer charged', 'Extension lead', 'Tarp & rake', 'Goggles & gloves'],
-    'bl-boiler': ['Boiler service kit', 'CO test meter', 'Service log book'],
-    'hv-gutter': ['Extension ladder', 'Gutter scoop', 'Gloves', 'Bucket'],
-    'hv-alarm': ['9V batteries ×3', 'Step stool'],
-    'hv-paint': ['Exterior paint', 'Sandpaper & filler', 'Brushes & tape', 'Dust sheets'],
-  };
+  private readonly tasks = signal<MaintenanceTask[]>([]);
 
-  /** Per-task prep checklist. Each item owns its checked + photo state. */
+  /** Per-task prep checklist (in-memory). Each item owns its checked + photo state. */
   private readonly prep = signal<Record<string, PrepItem[]>>({});
 
   private uid = 0;
-  private newTaskCount = 0;
 
   constructor() {
-    const seeded: Record<string, PrepItem[]> = {};
-    for (const t of this.tasks()) {
-      seeded[t.id] = (this.prepSeed[t.id] ?? []).map((label) => ({
-        id: `it${++this.uid}`,
-        label,
-        checked: false,
-        photo: null,
-      }));
-    }
-    // Demo: a couple of Maple Court lawn items already gathered, one with a photo.
-    if (seeded['mc-lawn']) {
-      seeded['mc-lawn'][0].checked = true;
-      seeded['mc-lawn'][3].checked = true;
-      seeded['mc-lawn'][1].photo = 'demo-photos/02.png';
-    }
-    this.prep.set(seeded);
+    const destroyRef = inject(DestroyRef);
+
+    const unsubscribe = onSnapshot(
+      TASKS,
+      (snapshot) => {
+        const loaded = snapshot.docs.map(
+          (d) => ({ id: d.id, ...d.data() }) as MaintenanceTask,
+        );
+        this.tasks.set(loaded);
+        // Initialize prep for any task that doesn't have an entry yet.
+        this.prep.update((map) => {
+          const next = { ...map };
+          for (const t of loaded) {
+            if (!next[t.id]) next[t.id] = [];
+          }
+          return next;
+        });
+        this.loading.set(false);
+      },
+      (err) => {
+        console.error('Firestore tasks snapshot error', err);
+        this.loading.set(false);
+      },
+    );
+
+    destroyRef.onDestroy(unsubscribe);
   }
 
   // ---- derived ----
@@ -214,7 +209,7 @@ export class MaintenanceStore {
     });
   }
 
-  // ---- prep checklist mutations ----
+  // ---- prep checklist mutations (in-memory) ----
   private patchPrep(taskId: string, fn: (items: PrepItem[]) => PrepItem[]) {
     this.prep.update((map) => ({ ...map, [taskId]: fn((map[taskId] ?? []).map((i) => ({ ...i }))) }));
   }
@@ -252,57 +247,52 @@ export class MaintenanceStore {
     );
   }
 
-  // ---- task mutations ----
+  // ---- task mutations (Firestore) ----
   toggleDone(taskId: string) {
-    this.tasks.update((list) => list.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)));
+    const task = this.tasks().find((t) => t.id === taskId);
+    if (task) updateDoc(doc(TASKS, taskId), { done: !task.done }).catch(console.error);
   }
 
   setRecurrence(taskId: string, recurrence: Recurrence) {
-    this.tasks.update((list) => list.map((t) => (t.id === taskId ? { ...t, recurrence } : t)));
+    updateDoc(doc(TASKS, taskId), { recurrence }).catch(console.error);
   }
 
-  /** Create a task on the active property and return its id. */
+  /** Create a task on the active property and return its Firestore-generated id. */
   addTask(draft: TaskDraft): string {
-    const id = `new-${++this.newTaskCount}`;
-    const task: MaintenanceTask = {
-      id,
+    const ref = doc(TASKS);
+    const id = ref.id;
+    const min = Math.max(5, Math.round(draft.durationMin || 0));
+    const task: Omit<MaintenanceTask, 'id'> = {
       propertyId: this.activePropertyId(),
       name: draft.name.trim() || 'Untitled task',
       iconKey: draft.iconKey,
       tint: draft.tint,
-      durationMin: Math.max(5, Math.round(draft.durationMin || 0)),
-      bucket: this.bucketFor(Math.max(5, Math.round(draft.durationMin || 0))),
+      durationMin: min,
+      bucket: this.bucketFor(min),
       recurrence: draft.recurrence,
       dueInDays: Math.round(draft.dueInDays || 0),
       done: false,
     };
-    this.tasks.update((list) => [...list, task]);
+    setDoc(ref, task).catch(console.error);
     this.prep.update((map) => ({ ...map, [id]: [] }));
     return id;
   }
 
   updateTask(id: string, draft: TaskDraft) {
     const min = Math.max(5, Math.round(draft.durationMin || 0));
-    this.tasks.update((list) =>
-      list.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              name: draft.name.trim() || 'Untitled task',
-              iconKey: draft.iconKey,
-              tint: draft.tint,
-              durationMin: min,
-              bucket: this.bucketFor(min),
-              recurrence: draft.recurrence,
-              dueInDays: Math.round(draft.dueInDays || 0),
-            }
-          : t,
-      ),
-    );
+    updateDoc(doc(TASKS, id), {
+      name: draft.name.trim() || 'Untitled task',
+      iconKey: draft.iconKey,
+      tint: draft.tint,
+      durationMin: min,
+      bucket: this.bucketFor(min),
+      recurrence: draft.recurrence,
+      dueInDays: Math.round(draft.dueInDays || 0),
+    }).catch(console.error);
   }
 
   deleteTask(id: string) {
-    this.tasks.update((list) => list.filter((t) => t.id !== id));
+    deleteDoc(doc(TASKS, id)).catch(console.error);
     this.prep.update((map) => {
       const next = { ...map };
       delete next[id];

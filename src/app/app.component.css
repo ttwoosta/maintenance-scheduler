@@ -387,6 +387,27 @@
   letter-spacing: 0.1px;
 }
 
+/* ===== Loading state ===== */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80px 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 2.5px solid var(--separator);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
 /* ===== Wide layout: show sidebar, hide bottom tabs + chips ===== */
 @container ms (min-width: 700px) {
   .shell {
