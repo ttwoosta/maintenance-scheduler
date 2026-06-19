@@ -82,4 +82,17 @@ export class PrepListComponent {
     const remaining = total - this.store.gatheredCount(task.id);
     return `${remaining} item${remaining === 1 ? '' : 's'} still to gather`;
   }
+
+  onFileSelected(event: Event, taskId: string, itemId: string) {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      this.store.uploadPhoto(taskId, itemId, dataUrl);
+      if (input) input.value = '';
+    };
+    reader.readAsDataURL(file);
+  }
 }

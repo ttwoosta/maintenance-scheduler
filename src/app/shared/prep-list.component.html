@@ -44,7 +44,14 @@
                     <svg viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="6.5" /><path d="M6.8 6.8l4.4 4.4M11.2 6.8l-4.4 4.4" /></svg>
                   </button>
                 } @else {
-                  <button class="row-action" aria-label="Take photo" (click)="store.takePhoto(task.id, item.id)">
+                  <input
+                    #fileInput
+                    type="file"
+                    accept="image/*"
+                    style="display: none"
+                    (change)="onFileSelected($event, task.id, item.id)"
+                  />
+                  <button class="row-action" aria-label="Upload photo" (click)="fileInput.click()">
                     <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h1.3l1-1.5h4.4l1 1.5h1.3A1.5 1.5 0 0 1 15 6.5v6A1.5 1.5 0 0 1 13.5 14h-9A1.5 1.5 0 0 1 3 12.5Z" /><circle cx="9" cy="9.3" r="2.4" /></svg>
                   </button>
                 }

@@ -283,6 +283,12 @@ export class MaintenanceStore {
     updateDoc(doc(db, 'tasks', taskId, 'prep', itemId), { photo, checked: true }).catch(console.error);
   }
 
+  /** Persist an uploaded photo (data URL) for a prep item and mark it checked. */
+  uploadPhoto(taskId: string, itemId: string, dataUrl: string) {
+    if (!this.isOwner(taskId)) return console.error('uploadPhoto: not owner');
+    updateDoc(doc(db, 'tasks', taskId, 'prep', itemId), { photo: dataUrl, checked: true }).catch(console.error);
+  }
+
   removePhoto(taskId: string, itemId: string) {
     if (!this.isOwner(taskId)) return console.error('removePhoto: not owner');
     updateDoc(doc(db, 'tasks', taskId, 'prep', itemId), { photo: null }).catch(console.error);
