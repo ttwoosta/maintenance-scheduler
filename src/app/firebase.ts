@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 
 // TODO: Replace placeholder values with your Firebase project config.
 // Firebase console → Project settings → Your apps → SDK setup and configuration
@@ -15,3 +15,10 @@ const firebaseConfig = {
 
 export const firebaseApp = initializeApp(firebaseConfig);
 export const db = getFirestore(firebaseApp, 'dev-maintenance-scheduler');
+
+const isLocalDevelopment =
+  typeof window !== 'undefined' && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+
+if (isLocalDevelopment) {
+  connectFirestoreEmulator(db, '127.0.0.1', 9000);
+}

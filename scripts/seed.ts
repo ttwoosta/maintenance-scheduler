@@ -2,11 +2,18 @@
  * Seed script — populates Firestore with the 12 demo tasks and their prep
  * checklists. Uses stable document IDs so re-running is idempotent.
  *
- *   npm run seed
+ *   npm run seed:local
+ *   npm run seed:cloud
  */
 
-import { collection, doc, writeBatch } from 'firebase/firestore';
+import { collection, connectFirestoreEmulator, doc, writeBatch } from 'firebase/firestore';
 import { db } from '../src/app/firebase';
+
+const seedTarget = process.env.SEED_TARGET ?? 'cloud';
+
+if (seedTarget === 'local') {
+  connectFirestoreEmulator(db, '127.0.0.1', 9000);
+}
 
 // ---- tasks ---------------------------------------------------------------
 
