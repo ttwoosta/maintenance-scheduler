@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "public",
+    "public": "dist/maintanance-scheduler/browser",
     "ignore": [
       "firebase.json",
       "**/.*",
