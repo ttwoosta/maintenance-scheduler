@@ -32,6 +32,7 @@
   --radius-control: 11px;
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 10px 28px rgba(0, 0, 0, 0.06);
   --tap-target: 44px;
+  --safe-bottom: env(safe-area-inset-bottom, 16px);
 }
 
 [data-theme='dark'],
@@ -77,4 +78,19 @@ body {
   outline: 2.5px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: 8px;
+}
+
+/* Check / toggle pop, shared by the prep checklist and complete buttons. */
+@keyframes ms-pop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }

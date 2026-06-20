@@ -1,18 +1,8 @@
-@if (!auth.initialized()) {
-  <!-- Auth state not yet resolved — avoid a flicker to login -->
-  <div class="auth-loading" role="status" aria-label="Loading…">
-    <div class="auth-spinner"></div>
-  </div>
-} @else if (!auth.isAuthenticated()) {
-  <!-- Not signed in — render login inline (router-outlet handles /login URL) -->
-  <app-login />
-  <router-outlet />
-} @else {
 <div class="viewport">
   <div class="shell">
     <!-- ===== SIDE MENU (wide / iPad) ===== -->
     <aside class="sidebar">
-      <div class="brand">
+      <a class="brand" routerLink="/" aria-label="Back to all apps">
         <span class="brand-mark">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.2 3.8a2.7 2.7 0 0 0-3 4.2l-5 5 1.8 1.8 5-5a2.7 2.7 0 0 0 4.2-3l-2 2-1.3-.4-.4-1.3 1.7-1.7Z" /></svg>
         </span>
@@ -20,7 +10,7 @@
           <span class="brand-name">Maintenance</span>
           <span class="brand-sub">Scheduler</span>
         </span>
-      </div>
+      </a>
 
       <p class="side-heading">Property</p>
       <ul
@@ -136,7 +126,6 @@
     <app-task-editor />
   </div>
 </div>
-} <!-- end @else authenticated -->
 
 <!-- ---- Shared icon templates ---- -->
 <ng-template #navIcon let-key="key">
